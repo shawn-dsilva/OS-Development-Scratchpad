@@ -1,0 +1,3 @@
+*.o
+*.elf
+stage2_eltorito
