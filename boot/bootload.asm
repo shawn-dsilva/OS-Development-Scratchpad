@@ -10,7 +10,7 @@
     ; DS being set to what we expect upon jumping to our code so we set it
     ; explicitly
 
-    mov ax,0x7E00     ; When we read the sector, we are going to read address 0x1000
+    mov ax,0x50    ; When we read the sector, we are going to read address 0x1000
     mov es,ax         ; Set ES with 0x1000
 
     xor bx,bx   ;Ensure that the buffer offset is 0!
@@ -20,7 +20,7 @@
     mov cl,0x2  ;Sector 2, track 1
     mov dh,0x0  ;Head 1
     int 0x13
-    jmp 0x7E00:0000 ;Jump to 0x1000, start of second program
+    jmp 0x50:0 ;Jump to 0x1000, start of second program
 
 times 510 - ($ - $$) db 0       ;Fill the rest of sector with 0
 dw 0xAA55   ;This is the boot signature
