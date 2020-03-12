@@ -6,13 +6,10 @@
 ;
 ;	OS Development Series
 ;*******************************************************
-
+section .kernel
 bits	16
-
 ; Remember the memory map-- 0x500 through 0x7bff is unused above the BIOS data area.
 ; We are loaded at 0x500 (0x50:0)
-
-org 0x500
 
 jmp	main				; go to start
 
@@ -20,7 +17,7 @@ jmp	main				; go to start
 ;	Preprocessor directives
 ;*******************************************************
 
-%include "stdio.inc"			; basic i/o routines
+;%include "stdio.inc"			; basic i/o routines
 %include "Gdt.inc"			; Gdt routines
 %include "A20.inc"			; A20 enabling
 
@@ -28,7 +25,7 @@ jmp	main				; go to start
 ;	Data Section
 ;*******************************************************
 
-LoadingMsg db 0x0D, 0x0A, "Searching for Operating System...", 0x00
+;LoadingMsg db 0x0D, 0x0A, "Searching for Operating System...", 0x00
 
 ;*******************************************************
 ;	STAGE 2 ENTRY POINT
@@ -70,8 +67,19 @@ main:
 	;   Print loading message	;
 	;-------------------------------;
 
-	mov	si, LoadingMsg
-	call	Puts16
+
+loading:
+  mov si,text ; point si register to hello label memory location
+  mov ah,0x0e ; 0x0e means 'Write Character in TTY mode'
+.loop:
+    lodsb
+    or al,al ; is al == 0 ?
+    jz EnterStage3 ; if (al == 0) jump to halt label
+    int 0x10 ; runs BIOS interrupt 0x10 - Video Services
+    jmp .loop
+
+  text: db 0xD,0xA,"In Stage Two, GDT and A20 set, Starting Protected Mode ",0
+
 
 	;-------------------------------;
 	;   Go into pmode		;
@@ -105,22 +113,31 @@ Stage3:
 	mov		ds, ax
 	mov		ss, ax
 	mov		es, ax
-	mov		esp, 90000h		; stack begins from 90000h
+	mov 	fs, ax
+  mov 	gs, ax
 
+	mov ebp, 0x90000
+	mov esp, ebp
+
+	; mov		esp, 90000h		; stack begins from 90000h
+
+	extern kmain
+	call kmain
+	cli
+	hlt
 	;---------------------------------------;
 	;   Clear screen and print success	;
 	;---------------------------------------;
 
-	call		ClrScr32
-	mov		ebx, msg
-	call		Puts32
+	; call		ClrScr32
+	; mov		ebx, msg
+	; call		Puts32
+
+	; call 0x9000
+
 
 	;---------------------------------------;
 	;   Stop execution			;
 	;---------------------------------------;
 
-	cli
-	hlt
-
-msg db  0x0A, "<[ OS Development Series Tutorial 10 ]>"
-		db  0x0A, "Basic 32 bit graphics demo in Assembly Language", 0x0A, 0
+msg db  0x0A, "<[ OS Development Series Tutorial 10 ]>",  0x0A, 0

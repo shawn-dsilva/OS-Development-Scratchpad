@@ -4,3 +4,4 @@ stage2_eltorito
 *.iso
 bochslog.txt
 *.bin
+*.img
